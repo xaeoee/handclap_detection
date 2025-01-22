@@ -111,7 +111,6 @@ def draw_vector(image, start_point, end_point, color=(0, 255, 0), thickness=2):
         color (tuple): RGB color values, defaults to green (0,255,0)
         thickness (int): Line thickness in pixels, defaults to 2
     """
-    print("drawing")
     cv2.line(image, start_point, end_point, color, thickness)
 
 def draw_normal_vector(image, start_point, normal_vector, scale=120):
@@ -198,7 +197,6 @@ def hand_mediapipe_detection(frame, model):
             else:
                 left_hand = np.array([(landmark.x, landmark.y, landmark.z) for landmark in results.multi_hand_landmarks[0].landmark])
                 right_hand = np.array([(landmark.x, landmark.y, landmark.z) for landmark in results.multi_hand_landmarks[1].landmark])
-            print("Both")
 
             return frame, left_hand, right_hand
 
@@ -209,11 +207,9 @@ def hand_mediapipe_detection(frame, model):
             # 만약 새끼 손까락이 엄지손가락보다 오른쪽에 위치해있을경우
             # 그건 오른손이다.
             if results.multi_hand_landmarks[0].landmark[4].x < results.multi_hand_landmarks[0].landmark[20].x:
-                print("Right")
                 return frame, None, np.array([(landmark.x, landmark.y, landmark.z) for landmark in results.multi_hand_landmarks[0].landmark])
             else:
                 # 새끼 손가락이 엄지손가락보다 화면상 좌측에 있을경우 오른손이다.
-                print("Left")
                 return frame, np.array([(landmark.x, landmark.y, landmark.z) for landmark in results.multi_hand_landmarks[0].landmark]), None
         else:
             return frame, None, None
@@ -240,3 +236,55 @@ def hand_width_height_scailing_ndarray(height, width, left_hand, right_hand):
     right_pinky_mcp_ndarry = right_hand[17]
     
     return left_wrist_ndarray, right_wrist_ndarray, left_index_mcp_ndarry, right_index_mcp_ndarry, left_pinky_mcp_ndarry, right_pinky_mcp_ndarry
+
+def calculate_bounding_box(height, width, left_hand, right_hand):
+    x_left_coords = left_hand[:, 0]
+    x_right_coords = right_hand[:, 0]
+    y_left_coords = left_hand[:, 1]
+    y_right_coords = right_hand[:, 1]
+
+    x_left_min, x_left_max = np.min(x_left_coords), np.max(x_left_coords)
+    y_left_min, y_left_max = np.min(y_left_coords), np.max(y_left_coords)
+    x_right_min, x_right_max = np.min(x_right_coords), np.max(x_right_coords)
+    y_right_min, y_right_max = np.min(y_right_coords), np.max(y_right_coords)
+    
+    return x_left_min, x_left_max, y_left_min, y_left_max, x_right_min, x_right_max, y_right_min, y_right_max
+
+def draw_bounding_boxes(frame, height, width,
+                        x_left_min, x_left_max, y_left_min, y_left_max, 
+                        x_right_min, x_right_max, y_right_min, y_right_max):
+
+    # 정규화 좌표 -> 픽셀 좌표 변환
+    left_start_point = (int(x_left_min * width), int(y_left_min * height))
+    left_end_point = (int(x_left_max * width), int(y_left_max * height))
+
+    right_start_point = (int(x_right_min * width), int(y_right_min * height))
+    right_end_point = (int(x_right_max * width), int(y_right_max * height))
+
+    # 왼손 경계 상자 (파란색)
+    cv2.rectangle(frame, left_start_point, left_end_point, (255, 0, 0), 2)
+
+    # 오른손 경계 상자 (녹색)
+    cv2.rectangle(frame, right_start_point, right_end_point, (0, 255, 0), 2)
+
+    cv2.putText(frame, "Left Hand", (left_start_point[0], left_start_point[1] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+    cv2.putText(frame, "Right Hand", (right_start_point[0], right_start_point[1] - 10),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+
+    return frame
+
+def calculate_diagonal_distance_ratio(x_left_min, x_left_max, y_left_min, y_left_max, x_right_min, x_right_max, y_right_min, y_right_max, wrist_distance):
+
+    # 각 손의 대각선 길이 계산
+    left_diagonal = np.sqrt((x_left_max - x_left_min)**2 + (y_left_max - y_left_min)**2)
+    right_diagonal = np.sqrt((x_right_max - x_right_min)**2 + (y_right_max - y_right_min)**2)
+    
+    # 평균 대각선 길이 계산
+    avg_diagonal = (left_diagonal + right_diagonal) / 2
+    
+    # 거리와 평균 대각선 길이의 비율 계산
+    ratio = wrist_distance / avg_diagonal
+    
+    return ratio, wrist_distance, avg_diagonal
