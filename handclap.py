@@ -13,7 +13,7 @@ YELLOW = "\033[33m"
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 # diff = []
-def handclap_detection(flip = True, video_path = 0):
+def handclap_detection(flip = True, video_path = "hand.MP4"):
     cap = cv2.VideoCapture(video_path)
 
     first_constraint = False
@@ -143,11 +143,11 @@ def handclap_detection(flip = True, video_path = 0):
                 #     first_constraint = False
                 #     second_constraint = False
 
-
             elif right_hand is None:
-                
+                cv2.imwrite('nohand.jpg', image)
                 pass
             elif left_hand is None:
+                cv2.imwrite('nohand.jpg', image)
                 pass
             # print(current_frame_count)
             # print(hand_count)
