@@ -1,4 +1,3 @@
-```markdown
 # Hand Clap Detection using MediaPipe
 
 This project detects **hand clapping gestures** using **MediaPipe** with two different methods:
