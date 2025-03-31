@@ -8,7 +8,7 @@ It is mainly built for analyzing abnormal repetitive movements such as hand flap
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```plaintext
 .
@@ -20,7 +20,7 @@ It is mainly built for analyzing abnormal repetitive movements such as hand flap
 
 ---
 
-## 🔧 Dependencies
+## Dependencies
 
 Install dependencies:
 
